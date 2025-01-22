@@ -20,7 +20,7 @@ interface BangunanService {
     suspend fun getBangunan(): List<Bangunan>
 
     @GET("bacabangunanid.php/{id_bangunan}")
-    suspend fun getBangunanById(@Query("id_bangunan") iid_bangunan:String): Bangunan
+    suspend fun getBangunanById(@Query("id_bangunan") id_bangunan:String): Bangunan
 
     @POST("insertbangunan.php")
     suspend fun insertBangunan(@Body bangunan: Bangunan)
