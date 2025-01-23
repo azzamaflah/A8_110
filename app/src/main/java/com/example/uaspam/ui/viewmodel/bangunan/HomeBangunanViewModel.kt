@@ -12,12 +12,12 @@ import retrofit2.HttpException
 import java.io.IOException
 
 sealed class HomeBangunanUiState {
-    data class Success(val kamar: List<Bangunan>) : HomeBangunanUiState()
+    data class Success(val bangunan: List<Bangunan>) : HomeBangunanUiState()
     object Error : HomeBangunanUiState()
     object Loading : HomeBangunanUiState()
 }
 
-class HomeBangunanViewModel(private val bangunanRepository: BangunanRepository) : ViewModel() {
+class HomeBangunanViewModel(private val bgn: BangunanRepository) : ViewModel() {
     var bangunanUiState: HomeBangunanUiState by mutableStateOf(HomeBangunanUiState.Loading)
         private set
 
@@ -29,7 +29,7 @@ class HomeBangunanViewModel(private val bangunanRepository: BangunanRepository) 
         viewModelScope.launch {
             bangunanUiState = HomeBangunanUiState.Loading
             bangunanUiState = try {
-                HomeBangunanUiState.Success(bangunanRepository.getBangunan())
+                HomeBangunanUiState.Success(bgn.getBangunan())
             } catch (e: IOException) {
                 HomeBangunanUiState.Error
             } catch (e: HttpException) {
@@ -41,7 +41,7 @@ class HomeBangunanViewModel(private val bangunanRepository: BangunanRepository) 
     fun deleteBangunan(idBangunan: String) {
         viewModelScope.launch {
             try {
-                bangunanRepository.deleteBangunan(idBangunan)
+                bgn.deleteBangunan(idBangunan)
                 getBangunan() // Refresh data after deletion
             } catch (e: IOException) {
                 bangunanUiState = HomeBangunanUiState.Error
