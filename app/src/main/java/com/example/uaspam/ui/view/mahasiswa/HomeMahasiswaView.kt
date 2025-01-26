@@ -5,21 +5,23 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.uaspam.model.Mahasiswa
+import com.example.uaspam.ui.costumewidget.CustomTopAppBar
 import com.example.uaspam.ui.navigation.DestinasiNavigasi
+import com.example.uaspam.ui.view.bangunan.EmptyData
+import com.example.uaspam.ui.view.bangunan.OnError
+import com.example.uaspam.ui.view.bangunan.OnLoading
 import com.example.uaspam.ui.viewmodel.PenyediaViewModel
-import com.example.uaspam.ui.viewmodel.mahasiswa.HomeViewModel
 import com.example.uaspam.ui.viewmodel.mahasiswa.HomeUiState
+import com.example.uaspam.ui.viewmodel.mahasiswa.HomeViewModel
 import kotlinx.coroutines.launch
 
 object DestinasiHomeMahasiswa : DestinasiNavigasi {
@@ -35,44 +37,43 @@ fun HomeMahasiswaView(
     onDetailClick: (String) -> Unit = {},
     viewModel: HomeViewModel = viewModel(factory = PenyediaViewModel.Factory)
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
+    LaunchedEffect(Unit) {
+        viewModel.getMhs()
+    }
 
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
-                title = { Text(DestinasiHomeMahasiswa.titleRes) },
-                actions = {
-                    IconButton(onClick = { viewModel.getMhs() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
-                    }
-                }
+            CustomTopAppBar(
+                title = DestinasiHomeMahasiswa.titleRes,
+                canNavigateBack = false,
+                scrollBehavior = scrollBehavior,
+                onRefresh = { viewModel.getMhs() }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = navigateToItemEntry) {
-                Icon(Icons.Default.Add, contentDescription = "Add Mahasiswa")
+            FloatingActionButton(
+                onClick = navigateToItemEntry,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.padding(18.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add Mahasiswa"
+                )
             }
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         content = { innerPadding ->
             HomeMahasiswaStatus(
                 mahasiswaUiState = viewModel.mhsUIState,
                 retryAction = { viewModel.getMhs() },
                 modifier = Modifier.padding(innerPadding),
                 onDetailClick = onDetailClick,
-                onDeleteClick = { mahasiswa ->
-                    coroutineScope.launch {
-                        try {
-                            viewModel.deleteMhs(mahasiswa.idMahasiswa)
-                            snackbarHostState.showSnackbar("Mahasiswa berhasil dihapus")
-                        } catch (e: Exception) {
-                            snackbarHostState.showSnackbar("Gagal menghapus mahasiswa")
-                        }
-                        viewModel.getMhs()
-                    }
+                onDeleteClick = {
+                    viewModel.deleteMhs(it.idMahasiswa)
+                    viewModel.getMhs()
                 }
             )
         }
@@ -88,29 +89,29 @@ fun HomeMahasiswaStatus(
     onDetailClick: (String) -> Unit
 ) {
     when (mahasiswaUiState) {
-        is HomeUiState.Loading -> OnLoading(modifier.fillMaxSize())
+        is HomeUiState.Loading -> OnLoading(modifier = modifier.fillMaxSize())
         is HomeUiState.Success -> {
             if (mahasiswaUiState.mahasiswa.isEmpty()) {
                 EmptyData(modifier)
             } else {
-                MahasiswaList(
+                MahasiswaLayout(
                     mahasiswa = mahasiswaUiState.mahasiswa,
+                    modifier = modifier.fillMaxWidth(),
                     onDetailClick = onDetailClick,
-                    onDeleteClick = onDeleteClick,
-                    modifier = modifier.fillMaxSize()
+                    onDeleteClick = { onDeleteClick(it) }
                 )
             }
         }
-        is HomeUiState.Error -> OnError(retryAction, modifier.fillMaxSize())
+        is HomeUiState.Error -> OnError(retryAction, modifier = modifier.fillMaxSize())
     }
 }
 
 @Composable
-fun MahasiswaList(
+fun MahasiswaLayout(
     mahasiswa: List<Mahasiswa>,
     modifier: Modifier = Modifier,
     onDetailClick: (String) -> Unit,
-    onDeleteClick: (Mahasiswa) -> Unit
+    onDeleteClick: (Mahasiswa) -> Unit = {}
 ) {
     LazyColumn(
         modifier = modifier,
@@ -120,8 +121,10 @@ fun MahasiswaList(
         items(mahasiswa) { mhs ->
             MahasiswaCard(
                 mahasiswa = mhs,
-                onDetailClick = onDetailClick,
-                onDeleteClick = onDeleteClick
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onDetailClick(mhs.idMahasiswa) },
+                onDeleteClick = { onDeleteClick(mhs) }
             )
         }
     }
@@ -130,72 +133,67 @@ fun MahasiswaList(
 @Composable
 fun MahasiswaCard(
     mahasiswa: Mahasiswa,
-    onDetailClick: (String) -> Unit,
-    onDeleteClick: (Mahasiswa) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onDeleteClick: (Mahasiswa) -> Unit = {}
 ) {
+    var showDialog by remember { mutableStateOf(false) }
+
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onDetailClick(mahasiswa.idMahasiswa) },
+        modifier = modifier,
         shape = MaterialTheme.shapes.medium,
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = mahasiswa.namaMahasiswa,
-                style = MaterialTheme.typography.titleLarge
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = mahasiswa.namaMahasiswa,
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Spacer(Modifier.weight(1f))
+                IconButton(onClick = { showDialog = true }) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null
+                    )
+                }
+            }
             Text(
                 text = "ID: ${mahasiswa.idMahasiswa}",
                 style = MaterialTheme.typography.bodyMedium
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Button(onClick = { onDeleteClick(mahasiswa) }) {
+        }
+    }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = {
+                Text(text = "Konfirmasi Hapus")
+            },
+            text = {
+                Text("Apakah Anda yakin ingin menghapus mahasiswa ini?")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDeleteClick(mahasiswa)
+                        showDialog = false
+                    }
+                ) {
                     Text("Hapus")
                 }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Batal")
+                }
             }
-        }
-    }
-}
-
-@Composable
-fun OnLoading(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator()
-    }
-}
-
-@Composable
-fun EmptyData(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Tidak ada data mahasiswa")
-    }
-}
-
-@Composable
-fun OnError(retryAction: () -> Unit, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Gagal memuat data mahasiswa")
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = retryAction) {
-                Text("Coba Lagi")
-            }
-        }
+        )
     }
 }

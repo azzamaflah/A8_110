@@ -2,7 +2,7 @@ package com.example.uaspam.repository
 
 import com.example.uaspam.model.Kamar
 import com.example.uaspam.service.KamarService
-import java.io.IOException
+import okio.IOException
 
 interface KamarRepository {
     suspend fun getKamar(): List<Kamar>
@@ -37,9 +37,7 @@ class NetworkKamarRepository(
         }
     }
 
-    override suspend fun getKamar(): List<Kamar> {
-        return kamarApiService.getKamar()
-    }
+    override suspend fun getKamar(): List<Kamar>  = kamarApiService.getKamar()
 
     override suspend fun getKamarById(idKamar: String): Kamar {
         return kamarApiService.getKamarById(idKamar)

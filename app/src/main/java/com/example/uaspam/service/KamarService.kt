@@ -2,7 +2,6 @@ package com.example.uaspam.service
 
 
 import com.example.uaspam.model.Kamar
-import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -19,7 +18,7 @@ interface KamarService {
     @GET("bacakamar.php")
     suspend fun getKamar(): List<Kamar>
 
-    @GET("bacakamarid.php/{id_kamar}")
+    @GET("bacakamarid.php")
     suspend fun getKamarById(@Query("id_kamar") id_kamar:String): Kamar
 
     @POST("insertkamar.php")
@@ -28,6 +27,6 @@ interface KamarService {
     @PUT("editkamar.php")
     suspend fun updateKamar(@Query("id_kamar")id_kamar: String, @Body kamar: Kamar)
 
-    @DELETE("deletekamar.php/{id_kamar}")
-    suspend fun deleteKamar(@Query("id_kamar")id_kamar: String): Response<Void>
+    @DELETE("deletekamar.php")
+    suspend fun deleteKamar(@Query("id_kamar")id_kamar: String): retrofit2.Response<Void>
 }

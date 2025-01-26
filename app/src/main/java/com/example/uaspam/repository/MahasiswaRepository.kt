@@ -39,6 +39,6 @@ class NetworkMahasiswaRepository(
 
     override suspend fun getMahasiswa(): List<Mahasiswa> = mahasiswaApiService.getMahasiswa()
     override suspend fun getMahasiswaById(idMahasiswa: String): Mahasiswa {
-        return mahasiswaApiService.getMahasiswaById("idMahasiswa")
+        return mahasiswaApiService.getMahasiswaById(idMahasiswa)
     }
 }

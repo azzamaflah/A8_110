@@ -3,8 +3,9 @@ package com.example.uaspam.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+
 @Serializable
-data class  Kamar (
+data class Kamar (
     @SerialName("id_kamar")
     val idKamar : String,
     @SerialName("nomor_kamar")

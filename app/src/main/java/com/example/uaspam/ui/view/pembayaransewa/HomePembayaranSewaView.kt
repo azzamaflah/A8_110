@@ -5,21 +5,23 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.uaspam.model.PembayaraanSewa
+import com.example.uaspam.ui.costumewidget.CustomTopAppBar
 import com.example.uaspam.ui.navigation.DestinasiNavigasi
+import com.example.uaspam.ui.view.bangunan.EmptyData
+import com.example.uaspam.ui.view.bangunan.OnError
+import com.example.uaspam.ui.view.bangunan.OnLoading
 import com.example.uaspam.ui.viewmodel.PenyediaViewModel
-import com.example.uaspam.ui.viewmodel.pembayaran.HomePembayaranSewaViewModel
 import com.example.uaspam.ui.viewmodel.pembayaran.HomePembayaranSewaUiState
-import kotlinx.coroutines.launch
+import com.example.uaspam.ui.viewmodel.pembayaran.HomePembayaranSewaViewModel
 
 object DestinasiHomePembayaranSewa : DestinasiNavigasi {
     override val route = "home_pembayaran_sewa"
@@ -34,43 +36,43 @@ fun HomePembayaranSewaView(
     onDetailClick: (String) -> Unit = {},
     viewModel: HomePembayaranSewaViewModel = viewModel(factory = PenyediaViewModel.Factory)
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
+    LaunchedEffect(Unit) {
+        viewModel.getPembayaranSewa()
+    }
 
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
-                title = { Text(DestinasiHomePembayaranSewa.titleRes) },
-                actions = {
-                    IconButton(onClick = { viewModel.getPembayaranSewa() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
-                    }
-                }
+            CustomTopAppBar(
+                title = DestinasiHomePembayaranSewa.titleRes,
+                canNavigateBack = false,
+                scrollBehavior = scrollBehavior,
+                onRefresh = { viewModel.getPembayaranSewa() }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = navigateToItemEntry) {
-                Icon(Icons.Default.Add, contentDescription = "Add Pembayaran Sewa")
+            FloatingActionButton(
+                onClick = navigateToItemEntry,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.padding(18.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Tambah Pembayaran Sewa"
+                )
             }
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         content = { innerPadding ->
             HomePembayaranSewaStatus(
-                pembayaranSewaUiState = viewModel.pembayaranSewaUiState,
+                pembayaranUiState = viewModel.pembayaranSewaUiState,
                 retryAction = { viewModel.getPembayaranSewa() },
                 modifier = Modifier.padding(innerPadding),
                 onDetailClick = onDetailClick,
-                onDeleteClick = { pembayaran ->
-                    coroutineScope.launch {
-                        try {
-                            viewModel.deletePembayaranSewa(pembayaran.idPembayaran)
-                            snackbarHostState.showSnackbar("Pembayaran berhasil dihapus")
-                        } catch (e: Exception) {
-                            snackbarHostState.showSnackbar("Gagal menghapus pembayaran")
-                        }
-                        viewModel.getPembayaranSewa()
-                    }
+                onDeleteClick = {
+                    viewModel.deletePembayaranSewa(it.idPembayaran)
+                    viewModel.getPembayaranSewa()
                 }
             )
         }
@@ -79,47 +81,49 @@ fun HomePembayaranSewaView(
 
 @Composable
 fun HomePembayaranSewaStatus(
-    pembayaranSewaUiState: HomePembayaranSewaUiState,
+    pembayaranUiState: HomePembayaranSewaUiState,
     retryAction: () -> Unit,
     modifier: Modifier = Modifier,
     onDeleteClick: (PembayaraanSewa) -> Unit = {},
     onDetailClick: (String) -> Unit
 ) {
-    when (pembayaranSewaUiState) {
-        is HomePembayaranSewaUiState.Loading -> OnLoading(modifier.fillMaxSize())
+    when (pembayaranUiState) {
+        is HomePembayaranSewaUiState.Loading -> OnLoading(modifier = modifier.fillMaxSize())
         is HomePembayaranSewaUiState.Success -> {
-            if (pembayaranSewaUiState.pembayaranSewa.isEmpty()) {
+            if (pembayaranUiState.pembayaranSewa.isEmpty()) {
                 EmptyData(modifier)
             } else {
                 PembayaranSewaList(
-                    pembayaranSewa = pembayaranSewaUiState.pembayaranSewa,
+                    pembayaran = pembayaranUiState.pembayaranSewa,
+                    modifier = modifier.fillMaxWidth(),
                     onDetailClick = onDetailClick,
-                    onDeleteClick = onDeleteClick,
-                    modifier = modifier.fillMaxSize()
+                    onDeleteClick = { onDeleteClick(it) }
                 )
             }
         }
-        is HomePembayaranSewaUiState.Error -> OnError(retryAction, modifier.fillMaxSize())
+        is HomePembayaranSewaUiState.Error -> OnError(retryAction, modifier = modifier.fillMaxSize())
     }
 }
 
 @Composable
 fun PembayaranSewaList(
-    pembayaranSewa: List<PembayaraanSewa>,
+    pembayaran: List<PembayaraanSewa>,
     modifier: Modifier = Modifier,
     onDetailClick: (String) -> Unit,
-    onDeleteClick: (PembayaraanSewa) -> Unit
+    onDeleteClick: (PembayaraanSewa) -> Unit = {}
 ) {
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        items(pembayaranSewa) { pembayaran ->
+        items(pembayaran) { item ->
             PembayaranSewaCard(
-                pembayaranSewa = pembayaran,
-                onDetailClick = onDetailClick,
-                onDeleteClick = onDeleteClick
+                pembayaranSewa = item,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onDetailClick(item.idPembayaran) },
+                onDeleteClick = { onDeleteClick(item) }
             )
         }
     }
@@ -128,72 +132,63 @@ fun PembayaranSewaList(
 @Composable
 fun PembayaranSewaCard(
     pembayaranSewa: PembayaraanSewa,
-    onDetailClick: (String) -> Unit,
-    onDeleteClick: (PembayaraanSewa) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onDeleteClick: (PembayaraanSewa) -> Unit = {}
 ) {
+    var showDialog by remember { mutableStateOf(false) }
+
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onDetailClick(pembayaranSewa.idPembayaran) },
+        modifier = modifier,
         shape = MaterialTheme.shapes.medium,
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = pembayaranSewa.idMahasiswa,
-                style = MaterialTheme.typography.titleLarge
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "ID: ${pembayaranSewa.idPembayaran}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Button(onClick = { onDeleteClick(pembayaranSewa) }) {
-                    Text("Hapus")
+                Text(
+                    text = pembayaranSewa.idMahasiswa,
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Spacer(Modifier.weight(1f))
+                IconButton(onClick = { showDialog = true }) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null
+                    )
                 }
             }
+            Text(
+                text = "ID Pembayaran: ${pembayaranSewa.idPembayaran}",
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
-}
 
-@Composable
-fun OnLoading(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator()
-    }
-}
-
-@Composable
-fun EmptyData(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Tidak ada data pembayaran sewa")
-    }
-}
-
-@Composable
-fun OnError(retryAction: () -> Unit, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Gagal memuat data pembayaran sewa")
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = retryAction) {
-                Text("Coba Lagi")
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text(text = "Konfirmasi Hapus") },
+            text = { Text("Apakah Anda yakin ingin menghapus pembayaran ini?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDeleteClick(pembayaranSewa)
+                        showDialog = false
+                    }
+                ) {
+                    Text("Hapus")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Batal")
+                }
             }
-        }
+        )
     }
 }

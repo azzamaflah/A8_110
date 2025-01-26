@@ -18,7 +18,7 @@ interface MahasiswaService {
     @GET("bacamahasiswa.php")
     suspend fun getMahasiswa(): List<Mahasiswa>
 
-    @GET("bacamahasiswaid.php/{id_mahasiswa}")
+    @GET("bacamahasiswaid.php")
     suspend fun getMahasiswaById(@Query("id_mahasiswa") id_mahasiswa:String):Mahasiswa
 
     @POST("insertmahasiswa.php")
@@ -27,7 +27,7 @@ interface MahasiswaService {
     @PUT("editmahasiswa.php")
     suspend fun updateMahasiswa(@Query("id_mahasiswa")id_mahasiswa: String, @Body mahasiswa: Mahasiswa)
 
-    @DELETE("deletemahasiswa.php/{id_mahasiswa}")
+    @DELETE("deletemahasiswa.php")
     suspend fun deleteMahasiswa(@Query("id_mahasiswa")id_mahasiswa: String): Response<Void>
 
 

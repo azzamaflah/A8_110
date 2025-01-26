@@ -8,7 +8,6 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import retrofit2.Retrofit
-import retrofit2.create
 
 interface AppContainer {
     val mahasiswaRepository: MahasiswaRepository
@@ -31,10 +30,10 @@ class AppsContainer : AppContainer {
 
     override val mahasiswaRepository: MahasiswaRepository by lazy {
         NetworkMahasiswaRepository(mahasiswaService)}
-        override val bangunanRepository: BangunanRepository by lazy {
+    override val bangunanRepository: BangunanRepository by lazy {
             NetworkBangunanRepository(bangunanService)}
-            override val kamarRepository: KamarRepository by lazy {
+    override val kamarRepository: KamarRepository by lazy {
                 NetworkKamarRepository(kamarService)}
-                override val pembayaraanSewa: PembayaraanSewaRepository by lazy {
+    override val pembayaraanSewa: PembayaraanSewaRepository by lazy {
                     NetworkPembayaraanSewaRepository(sewaService)}
 }

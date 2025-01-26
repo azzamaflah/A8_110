@@ -16,13 +16,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.uaspam.model.Kamar
 import com.example.uaspam.ui.costumewidget.CustomTopAppBar
 import com.example.uaspam.ui.navigation.DestinasiNavigasi
-import com.example.uaspam.ui.view.mahasiswa.EmptyData
-import com.example.uaspam.ui.view.mahasiswa.OnError
-import com.example.uaspam.ui.view.mahasiswa.OnLoading
+import com.example.uaspam.ui.view.bangunan.EmptyData
+import com.example.uaspam.ui.view.bangunan.OnError
+import com.example.uaspam.ui.view.bangunan.OnLoading
 import com.example.uaspam.ui.viewmodel.PenyediaViewModel
 import com.example.uaspam.ui.viewmodel.kamar.HomeKamarUiState
 import com.example.uaspam.ui.viewmodel.kamar.HomeKamarViewModel
-import kotlinx.coroutines.launch
 
 object DestinasiKamarHome : DestinasiNavigasi {
     override val route = "home_kamar"
@@ -38,6 +37,10 @@ fun HomeKamarScreen(
     viewModel: HomeKamarViewModel = viewModel(factory = PenyediaViewModel.Factory)
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
+    LaunchedEffect(Unit) {
+        viewModel.getKamar()
+    }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -93,7 +96,7 @@ fun HomeKamarStatus(
                 KamarLayout(
                     kamar = kamarUiState.kamar,
                     modifier = modifier.fillMaxWidth(),
-                    onDetailClick = { onDetailClick(it.idKamar) },
+                    onDetailClick = onDetailClick,
                     onDeleteClick = { onDeleteClick(it) }
                 )
             }
@@ -106,7 +109,7 @@ fun HomeKamarStatus(
 fun KamarLayout(
     kamar: List<Kamar>,
     modifier: Modifier = Modifier,
-    onDetailClick: (Kamar) -> Unit,
+    onDetailClick: (String) -> Unit,
     onDeleteClick: (Kamar) -> Unit = {}
 ) {
     LazyColumn(
@@ -119,7 +122,7 @@ fun KamarLayout(
                 kamar = kamar,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onDetailClick(kamar) },
+                    .clickable { onDetailClick(kamar.idKamar) },
                 onDeleteClick = { onDeleteClick(kamar) }
             )
         }
