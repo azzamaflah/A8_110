@@ -61,6 +61,7 @@ fun PengelolaHalaman(
          //Home Kamar
         composable(DestinasiKamarHome.route) {
             HomeKamarScreen(
+                navController = navController,
                 navigateToItemEntry = { navController.navigate(DestinasiEntryKamar.route) },
                 onDetailClick = {idKamar ->
                     navController.navigate("detail_kamar/$idKamar")
@@ -107,6 +108,7 @@ fun PengelolaHalaman(
         // Home Bangunan
         composable(DestinasiHomeBangunan.route) {
             HomeBangunanView(
+                navController = navController,
                 navigateToItemEntry = { navController.navigate(DestinasiEntryBangunan.route) },
                 onDetailClick = { idBangunan ->
                     navController.navigate("detail_bangunan/$idBangunan")
@@ -153,6 +155,7 @@ fun PengelolaHalaman(
         // home mahasiswa
         composable(DestinasiHomeMahasiswa.route){
             HomeMahasiswaView(
+                navController = navController,
                 navigateToItemEntry = { navController.navigate(DestinasiEntryMahasiswa.route) },
                 onDetailClick = {idMahasiswa ->
                     navController.navigate("detail_mahasiswa/$idMahasiswa")
@@ -200,6 +203,7 @@ fun PengelolaHalaman(
 
         composable(DestinasiHomePembayaranSewa.route){
             HomePembayaranSewaView(
+                navController = navController,
                 navigateToItemEntry = { navController.navigate(DestinasiEntryPembayaran.route) },
                 onDetailClick = { idPembayaran ->
                     navController.navigate("detail_pembayaran_sewa/$idPembayaran")
