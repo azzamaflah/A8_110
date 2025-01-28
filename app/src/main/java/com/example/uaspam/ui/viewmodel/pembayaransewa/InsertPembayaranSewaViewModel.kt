@@ -4,12 +4,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.uaspam.model.Mahasiswa
 import com.example.uaspam.model.PembayaraanSewa
+import com.example.uaspam.repository.MahasiswaRepository
 import com.example.uaspam.repository.PembayaraanSewaRepository
 import kotlinx.coroutines.launch
 
-class InsertPembayaranSewaViewModel(private val pembayaranRepository: PembayaraanSewaRepository) : ViewModel() {
+class InsertPembayaranSewaViewModel(
+    private val pembayaranRepository: PembayaraanSewaRepository,
+    private val mahasiswaRepository: MahasiswaRepository
+) : ViewModel() {
     var uiState by mutableStateOf(InsertPembayaranSewaUiState())
+        private set
+
+    var mahasiswaList by mutableStateOf<List<Mahasiswa>>(emptyList())
         private set
 
     fun updateInsertPembayaranState(insertUiEvent: InsertPembayaranSewaUiEvent) {
@@ -20,6 +28,16 @@ class InsertPembayaranSewaViewModel(private val pembayaranRepository: Pembayaraa
         viewModelScope.launch {
             try {
                 pembayaranRepository.insertSewa(uiState.insertUiEvent.toPembayaranSewa())
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun fetchMahasiswa() {
+        viewModelScope.launch {
+            try {
+                mahasiswaList = mahasiswaRepository.getMahasiswa()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
