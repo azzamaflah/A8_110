@@ -33,7 +33,8 @@ object PenyediaViewModel {
         }
 
         initializer {
-            InsertKamarViewModel(RunApp().appsContainer.kamarRepository)
+            InsertKamarViewModel(RunApp().appsContainer.kamarRepository,
+                bangunanRepository = RunApp().appsContainer.bangunanRepository)
         }
 
         initializer {
@@ -44,7 +45,8 @@ object PenyediaViewModel {
 
         initializer {
             EditKamarViewModel(
-                RunApp().appsContainer.kamarRepository
+                RunApp().appsContainer.kamarRepository,
+                bangunanRepository = RunApp().appsContainer.bangunanRepository
             )
         }
 
@@ -79,7 +81,8 @@ object PenyediaViewModel {
         }
 
         initializer {
-            InsertPembayaranSewaViewModel(RunApp().appsContainer.pembayaraanSewa)
+            InsertPembayaranSewaViewModel(RunApp().appsContainer.pembayaraanSewa,
+                mahasiswaRepository = RunApp().appsContainer.mahasiswaRepository)
         }
 
         initializer {
@@ -87,7 +90,8 @@ object PenyediaViewModel {
         }
 
         initializer {
-            EditPembayaranSewaViewModel(RunApp().appsContainer.pembayaraanSewa)
+            EditPembayaranSewaViewModel(RunApp().appsContainer.pembayaraanSewa,
+                mahasiswaRepository = RunApp().appsContainer.mahasiswaRepository)
         }
 
         // Initializer untuk HomeViewModel (Mahasiswa)
@@ -98,15 +102,18 @@ object PenyediaViewModel {
         }
 
         initializer {
-            InsertMahasiswaViewModel(RunApp().appsContainer.mahasiswaRepository)
+            InsertMahasiswaViewModel(RunApp().appsContainer.mahasiswaRepository,
+                kamarRepository = RunApp().appsContainer.kamarRepository)
         }
 
         initializer {
-            DetailMahasiswaViewModel(RunApp().appsContainer.mahasiswaRepository)
+            DetailMahasiswaViewModel(RunApp().appsContainer.mahasiswaRepository,
+                pembayaranRepository = RunApp().appsContainer.pembayaraanSewa)
         }
 
         initializer {
-            EditMahasiswaViewModel(RunApp().appsContainer.mahasiswaRepository)
+            EditMahasiswaViewModel(RunApp().appsContainer.mahasiswaRepository,
+                kamarRepository = RunApp().appsContainer.kamarRepository)
         }
 
     }
