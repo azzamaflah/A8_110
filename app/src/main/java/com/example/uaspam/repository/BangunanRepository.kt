@@ -5,6 +5,7 @@ import com.example.uaspam.service.BangunanService
 import java.io.IOException
 
 interface BangunanRepository {
+    suspend fun getAllBangunan(): List<Bangunan>
     suspend fun getBangunan(): List<Bangunan>
     suspend fun insertBangunan(bangunan: Bangunan)
     suspend fun updateBangunan(idBangunan: String, bangunan: Bangunan)
@@ -15,6 +16,13 @@ interface BangunanRepository {
 class NetworkBangunanRepository(
     private val bangunanApiService: BangunanService
 ) : BangunanRepository {
+    override suspend fun getAllBangunan(): List<Bangunan> {
+        return try {
+            bangunanApiService.getBangunan()
+        } catch (e: Exception) {
+            throw IOException("Failed to fetch bangunan data: ${e.message}")
+        }
+    }
     override suspend fun insertBangunan(bangunan: Bangunan) {
         bangunanApiService.insertBangunan(bangunan)
     }
