@@ -1,4 +1,5 @@
 package com.example.uaspam.ui.view.pembayaransewa
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -9,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.uaspam.model.Mahasiswa
 import com.example.uaspam.ui.costumewidget.CustomTopAppBar
 import com.example.uaspam.ui.viewmodel.PenyediaViewModel
 import com.example.uaspam.ui.viewmodel.pembayaransewa.EditPembayaranSewaUiEvent
@@ -36,6 +38,7 @@ fun EditPembayaranSewaView(
     // Load pembayaran sewa detail
     LaunchedEffect(idPembayaran) {
         viewModel.loadPembayaranSewaDetail(idPembayaran)
+        viewModel.loadMahasiswaList()
         isLoading = false
     }
 
@@ -62,6 +65,7 @@ fun EditPembayaranSewaView(
         } else {
             EditPembayaranSewaBody(
                 editUiState = viewModel.uiState,
+                mahasiswaList = viewModel.mahasiswaList,
                 onPembayaranValueChange = viewModel::updateEditPembayaranSewaState,
                 onSaveClick = {
                     coroutineScope.launch {
@@ -81,6 +85,7 @@ fun EditPembayaranSewaView(
 @Composable
 fun EditPembayaranSewaBody(
     editUiState: EditPembayaranSewaUiState,
+    mahasiswaList: List<Mahasiswa>,
     onPembayaranValueChange: (EditPembayaranSewaUiEvent) -> Unit,
     onSaveClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -91,6 +96,7 @@ fun EditPembayaranSewaBody(
     ) {
         FormPembayaranSewaInput(
             editUiEvent = editUiState.editUiEvent,
+            mahasiswaList = mahasiswaList,
             onValueChange = onPembayaranValueChange,
             modifier = Modifier.fillMaxWidth()
         )
@@ -108,22 +114,45 @@ fun EditPembayaranSewaBody(
 @Composable
 fun FormPembayaranSewaInput(
     editUiEvent: EditPembayaranSewaUiEvent,
+    mahasiswaList: List<Mahasiswa>,
     modifier: Modifier = Modifier,
     onValueChange: (EditPembayaranSewaUiEvent) -> Unit = {},
     enabled: Boolean = true
 ) {
+    var expanded by remember { mutableStateOf(false) }
+    var selectedMahasiswa by remember { mutableStateOf<Mahasiswa?>(null) }
+
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        OutlinedTextField(
-            value = editUiEvent.idMahasiswa,
-            onValueChange = { onValueChange(editUiEvent.copy(idMahasiswa = it)) },
-            label = { Text("ID Mahasiswa") },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = enabled,
-            singleLine = true
-        )
+        Box {
+            OutlinedTextField(
+                value = selectedMahasiswa?.namaMahasiswa ?: "Pilih Mahasiswa",
+                onValueChange = {},
+                label = { Text("ID Mahasiswa") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = true },
+                enabled = false, // Tidak bisa diisi manual
+                singleLine = true
+            )
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                mahasiswaList.forEach { mahasiswa ->
+                    DropdownMenuItem(
+                        text = { Text(mahasiswa.namaMahasiswa) },
+                        onClick = {
+                            selectedMahasiswa = mahasiswa
+                            onValueChange(editUiEvent.copy(idMahasiswa = mahasiswa.idMahasiswa))
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
         OutlinedTextField(
             value = editUiEvent.idPembayaran,
             onValueChange = { onValueChange(editUiEvent.copy(idPembayaran = it)) },

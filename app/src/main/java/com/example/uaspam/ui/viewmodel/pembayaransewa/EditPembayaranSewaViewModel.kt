@@ -4,13 +4,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.uaspam.model.Mahasiswa
 import com.example.uaspam.model.PembayaraanSewa
+import com.example.uaspam.repository.MahasiswaRepository
 import com.example.uaspam.repository.PembayaraanSewaRepository
 import kotlinx.coroutines.launch
 
-class EditPembayaranSewaViewModel(private val repository: PembayaraanSewaRepository) : ViewModel() {
+class EditPembayaranSewaViewModel(
+    private val pembayaranRepository: PembayaraanSewaRepository,
+    private val mahasiswaRepository: MahasiswaRepository
+) : ViewModel() {
 
     var uiState by mutableStateOf(EditPembayaranSewaUiState())
+        private set
+
+    var mahasiswaList by mutableStateOf<List<Mahasiswa>>(emptyList())
         private set
 
     fun updateEditPembayaranSewaState(editUiEvent: EditPembayaranSewaUiEvent) {
@@ -20,8 +28,18 @@ class EditPembayaranSewaViewModel(private val repository: PembayaraanSewaReposit
     fun loadPembayaranSewaDetail(idPembayaran: String) {
         viewModelScope.launch {
             try {
-                val pembayaranSewa = repository.getSewaById(idPembayaran)
+                val pembayaranSewa = pembayaranRepository.getSewaById(idPembayaran)
                 uiState = pembayaranSewa.toUiStatePembayaranSewa2()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun loadMahasiswaList() {
+        viewModelScope.launch {
+            try {
+                mahasiswaList = mahasiswaRepository.getMahasiswa()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -32,7 +50,7 @@ class EditPembayaranSewaViewModel(private val repository: PembayaraanSewaReposit
         viewModelScope.launch {
             try {
                 val pembayaranSewa = uiState.editUiEvent.toPembayaranSewa()
-                repository.updateSewa(pembayaranSewa.idPembayaran, pembayaranSewa)
+                pembayaranRepository.updateSewa(pembayaranSewa.idPembayaran, pembayaranSewa)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -53,6 +71,7 @@ data class EditPembayaranSewaUiEvent(
     val statusPembayaran: String = ""
 )
 
+// Konversi UI Event ke Model
 fun EditPembayaranSewaUiEvent.toPembayaranSewa(): PembayaraanSewa = PembayaraanSewa(
     idPembayaran = idPembayaran,
     idMahasiswa = idMahasiswa,
@@ -61,6 +80,7 @@ fun EditPembayaranSewaUiEvent.toPembayaranSewa(): PembayaraanSewa = PembayaraanS
     statusPembayaran = statusPembayaran
 )
 
+// Konversi Model ke UI State
 fun PembayaraanSewa.toUiStatePembayaranSewa2(): EditPembayaranSewaUiState = EditPembayaranSewaUiState(
     editUiEvent = toEditPembayaranSewaUiEvent()
 )

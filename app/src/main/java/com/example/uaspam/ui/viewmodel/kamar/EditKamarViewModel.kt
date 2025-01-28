@@ -4,14 +4,36 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.uaspam.model.Bangunan
 import com.example.uaspam.model.Kamar
+import com.example.uaspam.repository.BangunanRepository
 import com.example.uaspam.repository.KamarRepository
 import kotlinx.coroutines.launch
 
-class EditKamarViewModel(private val repository: KamarRepository) : ViewModel() {
+class EditKamarViewModel(
+    private val kamarRepository: KamarRepository,
+    private val bangunanRepository: BangunanRepository
+) : ViewModel() {
 
     var uiState by mutableStateOf(EditKamarUiState())
         private set
+
+    var bangunanList by mutableStateOf<List<Bangunan>>(emptyList()) // Daftar bangunan untuk dropdown
+        private set
+
+    init {
+        loadBangunanList() // Muat daftar bangunan saat ViewModel dibuat
+    }
+
+    private fun loadBangunanList() {
+        viewModelScope.launch {
+            try {
+                bangunanList = bangunanRepository.getAllBangunan() // Ambil data bangunan dari repository
+            } catch (e: Exception) {
+                bangunanList = emptyList()
+            }
+        }
+    }
 
     fun updateEditKamarState(editUiEvent: EditKamarUiEvent) {
         uiState = EditKamarUiState(editUiEvent = editUiEvent)
@@ -20,7 +42,7 @@ class EditKamarViewModel(private val repository: KamarRepository) : ViewModel() 
     fun loadKamarDetail(idKamar: String) {
         viewModelScope.launch {
             try {
-                val kamar = repository.getKamarById(idKamar)
+                val kamar = kamarRepository.getKamarById(idKamar)
                 uiState = kamar.toUiStateKamar2()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -32,7 +54,7 @@ class EditKamarViewModel(private val repository: KamarRepository) : ViewModel() 
         viewModelScope.launch {
             try {
                 val kamar = uiState.editUiEvent.toKamar()
-                repository.updateKamar(kamar.idKamar, kamar)
+                kamarRepository.updateKamar(kamar.idKamar, kamar)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -53,6 +75,7 @@ data class EditKamarUiEvent(
     val statusKamar: String = ""
 )
 
+// Konversi EditKamarUiEvent ke Model Kamar
 fun EditKamarUiEvent.toKamar(): Kamar = Kamar(
     idKamar = idKamar,
     nomorKamar = nomorKamar,
@@ -61,6 +84,7 @@ fun EditKamarUiEvent.toKamar(): Kamar = Kamar(
     statusKamar = statusKamar
 )
 
+// Konversi Model Kamar ke UiEvent
 fun Kamar.toUiStateKamar2(): EditKamarUiState = EditKamarUiState(
     editUiEvent = toEditKamarUiEvent()
 )

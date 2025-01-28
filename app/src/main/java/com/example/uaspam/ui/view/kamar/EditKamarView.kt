@@ -1,4 +1,5 @@
 package com.example.uaspam.ui.view.kamar
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -9,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.uaspam.model.Bangunan
 import com.example.uaspam.ui.costumewidget.CustomTopAppBar
 import com.example.uaspam.ui.viewmodel.PenyediaViewModel
 import com.example.uaspam.ui.viewmodel.kamar.EditKamarUiEvent
@@ -32,6 +34,7 @@ fun EditKamarView(
     val coroutineScope = rememberCoroutineScope()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     var isLoading by remember { mutableStateOf(true) }
+    val bangunanList = viewModel.bangunanList
 
     // Load kamar detail
     LaunchedEffect(idKamar) {
@@ -61,6 +64,7 @@ fun EditKamarView(
             }
         } else {
             EditKamarBody(
+                bangunanList = bangunanList,
                 editUiState = viewModel.uiState,
                 onKamarValueChange = viewModel::updateEditKamarState,
                 onSaveClick = {
@@ -80,6 +84,7 @@ fun EditKamarView(
 
 @Composable
 fun EditKamarBody(
+    bangunanList: List<Bangunan>, // Ubah menjadi List<Bangunan>
     editUiState: EditKamarUiState,
     onKamarValueChange: (EditKamarUiEvent) -> Unit,
     onSaveClick: () -> Unit,
@@ -90,6 +95,7 @@ fun EditKamarBody(
         modifier = modifier.padding(12.dp)
     ) {
         FormKamarInput(
+            bangunanList = bangunanList, // Ubah menjadi List<Bangunan>
             editUiEvent = editUiState.editUiEvent,
             onValueChange = onKamarValueChange,
             modifier = Modifier.fillMaxWidth()
@@ -107,11 +113,18 @@ fun EditKamarBody(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FormKamarInput(
+    bangunanList: List<Bangunan>, // Ubah menjadi List<Bangunan>
     editUiEvent: EditKamarUiEvent,
     modifier: Modifier = Modifier,
     onValueChange: (EditKamarUiEvent) -> Unit = {},
     enabled: Boolean = true
 ) {
+    var expanded by remember { mutableStateOf(false) }
+    var expandedStatus by remember { mutableStateOf(false) }
+    val statusOptions = listOf("TERSEDIA", "TIDAK TERSEDIA", "TERBOKING")
+    var selectedBangunan by remember { mutableStateOf<Bangunan?>(null) }
+    var selectedStatus by remember { mutableStateOf(editUiEvent.statusKamar) }
+
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -124,22 +137,36 @@ fun FormKamarInput(
             enabled = enabled,
             singleLine = true
         )
-        OutlinedTextField(
-            value = editUiEvent.idKamar,
-            onValueChange = { onValueChange(editUiEvent.copy(idKamar = it)) },
-            label = { Text("ID Kamar") },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = false, // ID Kamar tidak bisa diubah
-            singleLine = true
-        )
-        OutlinedTextField(
-            value = editUiEvent.idBangunan,
-            onValueChange = { onValueChange(editUiEvent.copy(idBangunan = it)) },
-            label = { Text("ID Bangunan") },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = enabled,
-            singleLine = true
-        )
+
+        // Nama Bangunan dropdown
+        Box {
+            OutlinedTextField(
+                value = selectedBangunan?.namaBangunan ?: "Pilih Bangunan",
+                onValueChange = {},
+                label = { Text("Nama Bangunan") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = true }, // Menambahkan clickable
+                enabled = false, // Tidak bisa mengedit nama bangunan
+                singleLine = true
+            )
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                bangunanList.forEach { bangunan ->
+                    DropdownMenuItem(
+                        onClick = {
+                            selectedBangunan = bangunan
+                            onValueChange(editUiEvent.copy(idBangunan = bangunan.idBangunan))
+                            expanded = false
+                        },
+                        text = { Text(bangunan.namaBangunan) }
+                    )
+                }
+            }
+        }
+
         OutlinedTextField(
             value = editUiEvent.kapasitas,
             onValueChange = { onValueChange(editUiEvent.copy(kapasitas = it)) },
@@ -148,24 +175,34 @@ fun FormKamarInput(
             enabled = enabled,
             singleLine = true
         )
-        OutlinedTextField(
-            value = editUiEvent.statusKamar,
-            onValueChange = { onValueChange(editUiEvent.copy(statusKamar = it)) },
-            label = { Text("Status Kamar") },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = enabled,
-            singleLine = true
-        )
 
-        if (enabled) {
-            Text(
-                text = "Edit data kamar yang diperlukan.",
-                modifier = Modifier.padding(12.dp)
+        // Status Kamar dropdown
+        Box {
+            OutlinedTextField(
+                value = selectedStatus.ifEmpty { "Pilih Status Kamar" },
+                onValueChange = {},
+                label = { Text("Status Kamar") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expandedStatus = true }, // Menambahkan clickable untuk status
+                enabled = false, // Tidak bisa mengedit status
+                singleLine = true
             )
+            DropdownMenu(
+                expanded = expandedStatus,
+                onDismissRequest = { expandedStatus = false }
+            ) {
+                statusOptions.forEach { status ->
+                    DropdownMenuItem(
+                        onClick = {
+                            selectedStatus = status
+                            onValueChange(editUiEvent.copy(statusKamar = status)) // Update statusKamar
+                            expandedStatus = false
+                        },
+                        text = { Text(status) }
+                    )
+                }
+            }
         }
-        Divider(
-            thickness = 8.dp,
-            modifier = Modifier.padding(12.dp)
-        )
     }
 }

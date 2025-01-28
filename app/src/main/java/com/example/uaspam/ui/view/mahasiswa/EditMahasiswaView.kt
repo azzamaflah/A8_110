@@ -1,4 +1,5 @@
 package com.example.uaspam.ui.view.mahasiswa
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -9,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.uaspam.model.Kamar
 import com.example.uaspam.ui.costumewidget.CustomTopAppBar
 import com.example.uaspam.ui.viewmodel.PenyediaViewModel
 import com.example.uaspam.ui.viewmodel.mahasiswa.EditMahasiswaUiEvent
@@ -36,6 +38,7 @@ fun EditMahasiswaView(
     // Load mahasiswa detail
     LaunchedEffect(idMahasiswa) {
         viewModel.loadMahasiswaDetail(idMahasiswa)
+        viewModel.loadKamarList()
         isLoading = false
     }
 
@@ -62,6 +65,7 @@ fun EditMahasiswaView(
         } else {
             EditMahasiswaBody(
                 editUiState = viewModel.uiState,
+                kamarList = viewModel.kamarList,
                 onMahasiswaValueChange = viewModel::updateEditMahasiswaState,
                 onSaveClick = {
                     coroutineScope.launch {
@@ -81,6 +85,7 @@ fun EditMahasiswaView(
 @Composable
 fun EditMahasiswaBody(
     editUiState: EditMahasiswaUiState,
+    kamarList: List<Kamar>,
     onMahasiswaValueChange: (EditMahasiswaUiEvent) -> Unit,
     onSaveClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -91,6 +96,7 @@ fun EditMahasiswaBody(
     ) {
         FormMahasiswaInput(
             editUiEvent = editUiState.editUiEvent,
+            kamarList = kamarList,
             onValueChange = onMahasiswaValueChange,
             modifier = Modifier.fillMaxWidth()
         )
@@ -108,10 +114,14 @@ fun EditMahasiswaBody(
 @Composable
 fun FormMahasiswaInput(
     editUiEvent: EditMahasiswaUiEvent,
+    kamarList: List<Kamar>,
     modifier: Modifier = Modifier,
     onValueChange: (EditMahasiswaUiEvent) -> Unit = {},
     enabled: Boolean = true
 ) {
+    var expanded by remember { mutableStateOf(false) }
+    var selectedKamar by remember { mutableStateOf(kamarList.find { it.idKamar == editUiEvent.idKamar }) }
+
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -156,14 +166,33 @@ fun FormMahasiswaInput(
             enabled = enabled,
             singleLine = true
         )
-        OutlinedTextField(
-            value = editUiEvent.idKamar,
-            onValueChange = { onValueChange(editUiEvent.copy(idKamar = it)) },
-            label = { Text("ID Kamar") },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = enabled,
-            singleLine = true
-        )
+        Box {
+            OutlinedTextField(
+                value = selectedKamar?.nomorKamar ?: "Pilih Kamar",
+                onValueChange = {},
+                label = { Text("ID Kamar") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = true },
+                enabled = false,
+                singleLine = true
+            )
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                kamarList.forEach { kamar ->
+                    DropdownMenuItem(
+                        text = { Text(kamar.nomorKamar) },
+                        onClick = {
+                            selectedKamar = kamar
+                            onValueChange(editUiEvent.copy(idKamar = kamar.idKamar))
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
         Divider(
             thickness = 8.dp,
             modifier = Modifier.padding(12.dp)
