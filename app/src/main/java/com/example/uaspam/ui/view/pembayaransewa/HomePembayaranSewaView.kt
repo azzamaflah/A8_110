@@ -5,7 +5,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.example.uaspam.model.PembayaraanSewa
 import com.example.uaspam.ui.costumewidget.CustomTopAppBar
 import com.example.uaspam.ui.navigation.DestinasiNavigasi
@@ -31,12 +34,14 @@ object DestinasiHomePembayaranSewa : DestinasiNavigasi {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomePembayaranSewaView(
+    navController: NavHostController,
     navigateToItemEntry: () -> Unit,
     modifier: Modifier = Modifier,
     onDetailClick: (String) -> Unit = {},
     viewModel: HomePembayaranSewaViewModel = viewModel(factory = PenyediaViewModel.Factory)
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val currentRoute = remember { navController.currentBackStackEntry?.destination?.route ?: "" }
 
     LaunchedEffect(Unit) {
         viewModel.getPembayaranSewa()
@@ -63,6 +68,12 @@ fun HomePembayaranSewaView(
                     contentDescription = "Tambah Pembayaran Sewa"
                 )
             }
+        },
+        bottomBar = {
+            com.example.uaspam.ui.costumewidget.BottomAppBar(
+                navController = navController,
+                currentRoute = currentRoute
+            )
         },
         content = { innerPadding ->
             HomePembayaranSewaStatus(
@@ -146,6 +157,7 @@ fun PembayaranSewaCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            // Header Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -158,17 +170,48 @@ fun PembayaranSewaCard(
                 IconButton(onClick = { showDialog = true }) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = null
+                        contentDescription = "Hapus Pembayaran"
                     )
                 }
             }
-            Text(
-                text = "ID Pembayaran: ${pembayaranSewa.idPembayaran}",
-                style = MaterialTheme.typography.bodyMedium
-            )
+
+            // ID Pembayaran
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ShoppingCart,
+                    contentDescription = "ID Pembayaran",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "ID Pembayaran: ${pembayaranSewa.idPembayaran}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            // Status Pembayaran
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "Status Pembayaran",
+                    tint = if (pembayaranSewa.statusPembayaran == "Lunas") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Status: ${pembayaranSewa.statusPembayaran}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
     }
 
+    // Konfirmasi Dialog
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
@@ -192,3 +235,4 @@ fun PembayaranSewaCard(
         )
     }
 }
+

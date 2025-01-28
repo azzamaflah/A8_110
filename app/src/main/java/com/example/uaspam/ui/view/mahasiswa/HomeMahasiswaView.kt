@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,7 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.example.uaspam.model.Mahasiswa
+import com.example.uaspam.ui.costumewidget.BottomAppBar
 import com.example.uaspam.ui.costumewidget.CustomTopAppBar
 import com.example.uaspam.ui.navigation.DestinasiNavigasi
 import com.example.uaspam.ui.view.bangunan.EmptyData
@@ -32,12 +36,14 @@ object DestinasiHomeMahasiswa : DestinasiNavigasi {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeMahasiswaView(
-    navigateToItemEntry: () -> Unit,
+    navController: NavHostController,
     modifier: Modifier = Modifier,
+    navigateToItemEntry: () -> Unit,
     onDetailClick: (String) -> Unit = {},
     viewModel: HomeViewModel = viewModel(factory = PenyediaViewModel.Factory)
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val currentRoute = remember { navController.currentBackStackEntry?.destination?.route ?: "" }
 
     LaunchedEffect(Unit) {
         viewModel.getMhs()
@@ -64,6 +70,12 @@ fun HomeMahasiswaView(
                     contentDescription = "Add Mahasiswa"
                 )
             }
+        },
+        bottomBar = {
+            BottomAppBar(
+                navController = navController,
+                currentRoute = currentRoute
+            )
         },
         content = { innerPadding ->
             HomeMahasiswaStatus(
@@ -159,14 +171,40 @@ fun MahasiswaCard(
                 IconButton(onClick = { showDialog = true }) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = null
+                        contentDescription = "Hapus Mahasiswa"
                     )
                 }
             }
-            Text(
-                text = "ID: ${mahasiswa.idMahasiswa}",
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "ID Mahasiswa",
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "ID: ${mahasiswa.idMahasiswa}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Home,
+                    contentDescription = "ID Kamar",
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "ID Kamar: ${mahasiswa.idKamar}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
     }
 

@@ -5,7 +5,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.example.uaspam.model.Kamar
 import com.example.uaspam.ui.costumewidget.CustomTopAppBar
 import com.example.uaspam.ui.navigation.DestinasiNavigasi
@@ -31,12 +35,14 @@ object DestinasiKamarHome : DestinasiNavigasi {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeKamarScreen(
+    navController: NavHostController,
     navigateToItemEntry: () -> Unit,
     modifier: Modifier = Modifier,
     onDetailClick: (String) -> Unit = {},
     viewModel: HomeKamarViewModel = viewModel(factory = PenyediaViewModel.Factory)
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val currentRoute = remember { navController.currentBackStackEntry?.destination?.route ?: "" }
 
     LaunchedEffect(Unit) {
         viewModel.getKamar()
@@ -63,6 +69,12 @@ fun HomeKamarScreen(
                     contentDescription = "Add Kamar"
                 )
             }
+        },
+        bottomBar = {
+            com.example.uaspam.ui.costumewidget.BottomAppBar(
+                navController = navController,
+                currentRoute = currentRoute
+            )
         },
         content = { innerPadding ->
             HomeKamarStatus(
@@ -144,35 +156,75 @@ fun KamarCard(
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Nomor Kamar
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = kamar.nomorKamar,
-                    style = MaterialTheme.typography.titleLarge
+                Icon(
+                    imageVector = Icons.Default.Home,
+                    contentDescription = "ID Kamar",
+                    modifier = Modifier.size(24.dp)
                 )
-                Spacer(Modifier.weight(1f))
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "ID Kamar: ${kamar.idKamar}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            // Kapasitas
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Kapasitas",
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Kapasitas: ${kamar.kapasitas}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            // Status Kamar
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = "Status Kamar",
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Status: ${kamar.statusKamar}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            // Delete Icon
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
                 IconButton(onClick = { showDialog = true }) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = null
+                        contentDescription = "Delete Kamar"
                     )
                 }
             }
-            Text(
-                text = kamar.kapasitas,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = kamar.statusKamar,
-                style = MaterialTheme.typography.titleMedium
-            )
         }
     }
 
+    // Dialog confirmation for delete
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
