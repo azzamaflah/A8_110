@@ -1,4 +1,5 @@
 package com.example.uaspam.ui.view.pembayaransewa
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -7,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
@@ -17,6 +19,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.uaspam.model.Mahasiswa
 import com.example.uaspam.ui.costumewidget.CustomTopAppBar
 import com.example.uaspam.ui.navigation.DestinasiNavigasi
 import com.example.uaspam.ui.viewmodel.PenyediaViewModel
@@ -39,6 +42,11 @@ fun InsertPembayaranSewaView(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val mahasiswaList = viewModel.mahasiswaList
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchMahasiswa()
+    }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -53,6 +61,7 @@ fun InsertPembayaranSewaView(
     ) { innerPadding ->
         EntryPembayaranBody(
             insertUiState = viewModel.uiState,
+            mahasiswaList = mahasiswaList,
             onPembayaranValueChange = viewModel::updateInsertPembayaranState,
             onSaveClick = {
                 coroutineScope.launch {
@@ -71,6 +80,7 @@ fun InsertPembayaranSewaView(
 @Composable
 fun EntryPembayaranBody(
     insertUiState: InsertPembayaranSewaUiState,
+    mahasiswaList: List<Mahasiswa>,
     onPembayaranValueChange: (InsertPembayaranSewaUiEvent) -> Unit,
     onSaveClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -81,6 +91,7 @@ fun EntryPembayaranBody(
     ) {
         FormPembayaranInput(
             insertUiEvent = insertUiState.insertUiEvent,
+            mahasiswaList = mahasiswaList,
             onValueChange = onPembayaranValueChange,
             modifier = Modifier.fillMaxWidth()
         )
@@ -98,12 +109,15 @@ fun EntryPembayaranBody(
 @Composable
 fun FormPembayaranInput(
     insertUiEvent: InsertPembayaranSewaUiEvent,
+    mahasiswaList: List<Mahasiswa>,
     modifier: Modifier = Modifier,
     onValueChange: (InsertPembayaranSewaUiEvent) -> Unit = {},
     enabled: Boolean = true
 ) {
     val statusPembayaranOptions = listOf("Lunas", "Gagal")
-    var expanded by remember { mutableStateOf(false) }
+    var expandedMahasiswa by remember { mutableStateOf(false) }
+    var selectedMahasiswa by remember { mutableStateOf<Mahasiswa?>(null) }
+    var expandedStatus by remember { mutableStateOf(false) }
     val (selectedStatus, onStatusSelected) = remember { mutableStateOf(insertUiEvent.statusPembayaran) }
 
     Column(
@@ -118,14 +132,46 @@ fun FormPembayaranInput(
             enabled = enabled,
             singleLine = true
         )
-        OutlinedTextField(
-            value = insertUiEvent.idMahasiswa,
-            onValueChange = { onValueChange(insertUiEvent.copy(idMahasiswa = it)) },
-            label = { Text("ID Mahasiswa") },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = enabled,
-            singleLine = true
-        )
+
+        // Dropdown Menu for ID Mahasiswa
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = selectedMahasiswa?.namaMahasiswa ?: "Pilih Mahasiswa",
+                onValueChange = {},
+                label = { Text("ID Mahasiswa") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expandedMahasiswa = true },
+                enabled = false,
+                trailingIcon = {
+                    IconButton(onClick = { expandedMahasiswa = !expandedMahasiswa }) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Dropdown"
+                        )
+                    }
+                },
+                singleLine = true
+            )
+
+            DropdownMenu(
+                expanded = expandedMahasiswa,
+                onDismissRequest = { expandedMahasiswa = false },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                mahasiswaList.forEach { mahasiswa ->
+                    DropdownMenuItem(
+                        text = { Text(mahasiswa.namaMahasiswa) },
+                        onClick = {
+                            selectedMahasiswa = mahasiswa
+                            onValueChange(insertUiEvent.copy(idMahasiswa = mahasiswa.idMahasiswa))
+                            expandedMahasiswa = false
+                        }
+                    )
+                }
+            }
+        }
+
         OutlinedTextField(
             value = insertUiEvent.jumlah,
             onValueChange = { onValueChange(insertUiEvent.copy(jumlah = it)) },
@@ -154,7 +200,7 @@ fun FormPembayaranInput(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = false,
                 trailingIcon = {
-                    IconButton(onClick = { expanded = !expanded }) {
+                    IconButton(onClick = { expandedStatus = !expandedStatus }) {
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
                             contentDescription = "Dropdown"
@@ -165,8 +211,8 @@ fun FormPembayaranInput(
             )
 
             DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
+                expanded = expandedStatus,
+                onDismissRequest = { expandedStatus = false },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 statusPembayaranOptions.forEach { status ->
@@ -175,7 +221,7 @@ fun FormPembayaranInput(
                         onClick = {
                             onStatusSelected(status)
                             onValueChange(insertUiEvent.copy(statusPembayaran = status))
-                            expanded = false
+                            expandedStatus = false
                         }
                     )
                 }
