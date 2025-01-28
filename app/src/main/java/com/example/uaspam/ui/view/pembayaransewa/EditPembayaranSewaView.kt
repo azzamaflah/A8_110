@@ -119,8 +119,11 @@ fun FormPembayaranSewaInput(
     onValueChange: (EditPembayaranSewaUiEvent) -> Unit = {},
     enabled: Boolean = true
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var expandedMahasiswa by remember { mutableStateOf(false) }
     var selectedMahasiswa by remember { mutableStateOf<Mahasiswa?>(null) }
+
+    var expandedStatus by remember { mutableStateOf(false) }
+    val statusOptions = listOf("Lunas", "Gagal")
 
     Column(
         modifier = modifier,
@@ -133,13 +136,13 @@ fun FormPembayaranSewaInput(
                 label = { Text("ID Mahasiswa") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { expanded = true },
+                    .clickable { expandedMahasiswa = true },
                 enabled = false, // Tidak bisa diisi manual
                 singleLine = true
             )
             DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
+                expanded = expandedMahasiswa,
+                onDismissRequest = { expandedMahasiswa = false }
             ) {
                 mahasiswaList.forEach { mahasiswa ->
                     DropdownMenuItem(
@@ -147,7 +150,7 @@ fun FormPembayaranSewaInput(
                         onClick = {
                             selectedMahasiswa = mahasiswa
                             onValueChange(editUiEvent.copy(idMahasiswa = mahasiswa.idMahasiswa))
-                            expanded = false
+                            expandedMahasiswa = false
                         }
                     )
                 }
@@ -177,14 +180,34 @@ fun FormPembayaranSewaInput(
             enabled = enabled,
             singleLine = true
         )
-        OutlinedTextField(
-            value = editUiEvent.statusPembayaran,
-            onValueChange = { onValueChange(editUiEvent.copy(statusPembayaran = it)) },
-            label = { Text("Status Pembayaran") },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = enabled,
-            singleLine = true
-        )
+
+        // Dropdown untuk Status Pembayaran
+        Box {
+            OutlinedTextField(
+                value = editUiEvent.statusPembayaran,
+                onValueChange = {},
+                label = { Text("Status Pembayaran") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expandedStatus = true },
+                enabled = false, // Status Pembayaran hanya bisa dipilih dari dropdown
+                singleLine = true
+            )
+            DropdownMenu(
+                expanded = expandedStatus,
+                onDismissRequest = { expandedStatus = false }
+            ) {
+                statusOptions.forEach { status ->
+                    DropdownMenuItem(
+                        text = { Text(status) },
+                        onClick = {
+                            onValueChange(editUiEvent.copy(statusPembayaran = status))
+                            expandedStatus = false
+                        }
+                    )
+                }
+            }
+        }
 
         if (enabled) {
             Text(
