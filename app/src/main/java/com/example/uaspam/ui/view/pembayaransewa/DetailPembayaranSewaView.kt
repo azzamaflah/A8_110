@@ -123,6 +123,10 @@ fun DetailPembayaranSewaCard(
                 }
             }
             Text(
+                text = "ID Mahasiswa: ${pembayaran.idMahasiswa}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
                 text = "Jumlah: ${pembayaran.jumlah}",
                 style = MaterialTheme.typography.bodyMedium
             )
