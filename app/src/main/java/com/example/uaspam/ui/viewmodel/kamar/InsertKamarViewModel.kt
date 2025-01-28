@@ -5,12 +5,35 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.uaspam.model.Bangunan
 import com.example.uaspam.model.Kamar
+import com.example.uaspam.repository.BangunanRepository
 import com.example.uaspam.repository.KamarRepository
 import kotlinx.coroutines.launch
-class InsertKamarViewModel(private val kamarRepository: KamarRepository) : ViewModel() {
+
+class InsertKamarViewModel(
+    private val kamarRepository: KamarRepository,
+    private val bangunanRepository: BangunanRepository
+) : ViewModel() {
     var uiState by mutableStateOf(InsertKamarUiState())
         private set
+
+    var bangunanList by mutableStateOf<List<Bangunan>>(emptyList()) // Daftar bangunan untuk dropdown
+        private set
+
+    init {
+        loadBangunanList() // Muat daftar bangunan saat ViewModel dibuat
+    }
+
+    private fun loadBangunanList() {
+        viewModelScope.launch {
+            try {
+                bangunanList = bangunanRepository.getAllBangunan() // Ambil data bangunan dari repository
+            } catch (e: Exception) {
+                bangunanList = emptyList()
+            }
+        }
+    }
 
     fun updateInsertKamarState(insertUiEvent: InsertKamarUiEvent) {
         uiState = InsertKamarUiState(insertUiEvent = insertUiEvent)
@@ -27,6 +50,7 @@ class InsertKamarViewModel(private val kamarRepository: KamarRepository) : ViewM
     }
 }
 
+// UI State untuk insert kamar
 data class InsertKamarUiState(
     val insertUiEvent: InsertKamarUiEvent = InsertKamarUiEvent()
 )
@@ -34,7 +58,7 @@ data class InsertKamarUiState(
 data class InsertKamarUiEvent(
     val idKamar: String = "",
     val nomorKamar: String = "",
-    val idBangun: String = "",
+    val idBangun: String = "", // Hubungkan ke ID bangunan
     val kapasitas: String = "",
     val statusKamar: String = ""
 )
@@ -56,7 +80,6 @@ fun Kamar.toInsertUiEvent(): InsertKamarUiEvent = InsertKamarUiEvent(
     kapasitas = kapasitas,
     statusKamar = statusKamar
 )
-
 
 fun Kamar.toUiStateKamar(): InsertKamarUiState = InsertKamarUiState(
     insertUiEvent = toInsertUiEvent()

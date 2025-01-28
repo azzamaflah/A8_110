@@ -5,13 +5,36 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.uaspam.model.Kamar
 import com.example.uaspam.model.Mahasiswa
+import com.example.uaspam.repository.KamarRepository
 import com.example.uaspam.repository.MahasiswaRepository
 import kotlinx.coroutines.launch
 
-class InsertMahasiswaViewModel(private val mahasiswaRepository: MahasiswaRepository) : ViewModel() {
+class InsertMahasiswaViewModel(private val mahasiswaRepository: MahasiswaRepository, private val kamarRepository: KamarRepository) : ViewModel() {
     var uiState by mutableStateOf(InsertMahasiswaUiState())
         private set
+
+    var kamarList by mutableStateOf<List<Kamar>>(emptyList())
+        private set
+
+
+    init {
+        getAvailableKamar()
+    }
+
+    // Fungsi untuk mengambil daftar kamar dengan status TERSEDIA
+    private fun getAvailableKamar() {
+        viewModelScope.launch {
+            try {
+                kamarList = kamarRepository.getKamarByStatus("TERSEDIA")
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+
 
     fun updateInsertMahasiswaState(insertUiEvent: InsertMahasiswaUiEvent) {
         uiState = InsertMahasiswaUiState(insertUiEvent = insertUiEvent)
